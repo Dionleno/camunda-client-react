@@ -1,26 +1,60 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form"; 
+const FORM = {
+  "calculadora": "calculadora"
+} 
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+// Buscar e listar as instance started GET engine-rest/task ou com query string GET engine-rest/task?name=calculadora
+// Iniciar nova instance POST /engine-rest/process-definition/key/{key}/start = key=calculadora
+// ao clicar na instance abrir o form dinamicamente atraves das envs GET /engine-rest/task/{Task_id}/form-variables
+
+
+
+function TaskForm() {
+    const { register } = useForm();
+    const [schema, setSchema] = useState({});
+
+    // Fetch the schema from Camunda and set it as state
+    useEffect(() => {
+    fetch("http://localhost:8080/engine-rest/task/80ad94a6-7cec-11ef-9e14-0242ac110002/form-variables")
+    .then((response) => response.json())
+    .then((data) => setSchema(data));
+    }, []);
+    
+  
+ 
+return ( 
+<>
+<h1>Lista de tarefas</h1> 
+{
+      Object.entries(schema).map(([fieldName, fieldConfig]: any, i) => {
+        console.log(fieldConfig.type);
+        if (fieldConfig.type === "Object") {
+          console.log(fieldConfig.value);
+          
+          return ( 
+            <>
+            <label htmlFor="fieldName">{fieldName}</label>
+            <select {...register(fieldName)}>
+            {fieldConfig.value.map((option: any) => (
+             <option>{option}</option>
+            ))}
+              </select>
+            </>
+          )
+        }
+
+        if (fieldConfig.type === "Long") {
+          return ( 
+            <>
+            <label htmlFor="fieldName">{fieldName}</label>
+            <input  key={i} {...register(fieldName)} />
+            </>
+          )
+        }
+      })
+    }
+ </>
+)
 }
-
-export default App;
+export default TaskForm
